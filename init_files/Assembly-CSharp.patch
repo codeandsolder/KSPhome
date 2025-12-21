@@ -1,0 +1,510 @@
+diff --git a/A/-.cs b/A/-.cs
+--- a/A/-.cs
++++ b/A/-.cs
+@@ -21,10 +21,6 @@ namespace A
+ 			A._0003._001E = Assembly.Load(assemblyString);
+ 		}
+ 
+-		internal static void _0003()
+-		{
+-		}
+-
+ 		private static Assembly _000D(object _001E, ResolveEventArgs _0003)
+ 		{
+ 			Assembly executingAssembly = Assembly.GetExecutingAssembly();
+diff --git a/AnalyticsUtil.cs b/AnalyticsUtil.cs
+--- a/AnalyticsUtil.cs
++++ b/AnalyticsUtil.cs
+@@ -112,7 +112,6 @@ internal static class AnalyticsUtil
+ 			AnalyticsUtil.m_EventData.Clear();
+ 			eventSetupAction();
+ 			AnalyticsUtil.LogCustomEventToFile(eventName);
+-			AnalyticsEvent.Custom(eventName, AnalyticsUtil.m_EventData);
+ 		}
+ 		catch (Exception ex)
+ 		{
+diff --git a/AppUIMaster.cs b/AppUIMaster.cs
+--- a/AppUIMaster.cs
++++ b/AppUIMaster.cs
+@@ -49,7 +49,7 @@ public class AppUIMaster : MonoBehaviour
+ 				MonoBehaviour[] components = controlPrefab.GetComponents<MonoBehaviour>();
+ 				for (int j = 0; j < components.Length; j++)
+ 				{
+-					foreach (Attribute customAttribute in components[j].GetType().GetCustomAttributes())
++					foreach (Attribute customAttribute in components[j].GetType().GetCustomAttributes(true))
+ 					{
+ 						if (customAttribute.GetType() == type)
+ 						{
+diff --git a/Expansions/Missions/Editor/MissionEditorLogic.cs b/Expansions/Missions/Editor/MissionEditorLogic.cs
+--- a/Expansions/Missions/Editor/MissionEditorLogic.cs
++++ b/Expansions/Missions/Editor/MissionEditorLogic.cs
+@@ -1830,61 +1830,11 @@ namespace Expansions.Missions.Editor
+ 			bool num2;
+ 			if (InputLockManager.IsUnlocked(ControlTypes.EDITOR_UNDO_REDO) && !this.PreventCanvasObjectChanges())
+ 			{
+-				if (!Application.isEditor)
+-				{
+-					if (Application.platform == RuntimePlatform.OSXPlayer)
+-					{
+-						if (Input.GetKey(KeyCode.LeftCommand))
+-						{
+-							num2 = Input.GetKey(KeyCode.Z);
+-							goto IL_01b8;
+-						}
+-					}
+-					else if (Input.GetKey(KeyCode.LeftControl))
+-					{
+-						num2 = Input.GetKeyDown(KeyCode.Z);
+-						goto IL_01b8;
+-					}
+-					goto IL_01c0;
+-				}
+-				num2 = Input.GetKeyDown(KeyCode.Z);
+-				goto IL_01b8;
+-			}
+-			goto IL_020e;
+-			IL_0206:
+-			bool num3;
+-			if (num3 != 0)
+-			{
+-				this.OnRedo();
+-			}
+-			goto IL_020e;
+-			IL_01c0:
+-			if (!Application.isEditor)
+-			{
+-				if (Application.platform == RuntimePlatform.OSXPlayer)
+-				{
+-					if (Input.GetKey(KeyCode.LeftCommand))
+-					{
+-						num3 = Input.GetKey(KeyCode.Y);
+-						goto IL_0206;
+-					}
+-				}
+-				else if (Input.GetKey(KeyCode.LeftControl))
+-				{
+-					num3 = Input.GetKeyDown(KeyCode.Y);
+-					goto IL_0206;
+-				}
+-				goto IL_020e;
+-			}
+-			num3 = Input.GetKeyDown(KeyCode.Y);
+-			goto IL_0206;
+-			IL_01b8:
+-			if (num2)
+-			{
++				if ((Application.isEditor ? (Input.GetKeyDown(KeyCode.Z) ? 1 : 0) : (Application.platform != RuntimePlatform.OSXPlayer ? (!Input.GetKey(KeyCode.LeftControl) ? 0 : (Input.GetKeyDown(KeyCode.Z) ? 1 : 0)) : (!Input.GetKey(KeyCode.LeftCommand) ? 0 : (Input.GetKey(KeyCode.Z) ? 1 : 0)))) != 0)
+ 					this.OnUndo();
++				if ((Application.isEditor ? (Input.GetKeyDown(KeyCode.Y) ? 1 : 0) : (Application.platform != RuntimePlatform.OSXPlayer ? (!Input.GetKey(KeyCode.LeftControl) ? 0 : (Input.GetKeyDown(KeyCode.Y) ? 1 : 0)) : (!Input.GetKey(KeyCode.LeftCommand) ? 0 : (Input.GetKey(KeyCode.Y) ? 1 : 0)))) != 0)
++					this.OnRedo();
+ 			}
+-			goto IL_01c0;
+-			IL_020e:
+ 			if (Input.GetKeyDown(KeyCode.BackQuote))
+ 			{
+ 				this.searchInput.Select();
+diff --git a/FlightCamera.cs b/FlightCamera.cs
+--- a/FlightCamera.cs
++++ b/FlightCamera.cs
+@@ -1180,9 +1180,4 @@ public class FlightCamera : MonoBehaviour, IKSPCamera
+ 		}
+ 	}
+ 
+-	[SpecialName]
+-	bool IKSPCamera.get_enabled()
+-	{
+-		return base.enabled;
+-	}
+ }
+diff --git a/KSP/UI/PinnableTooltipController.cs b/KSP/UI/PinnableTooltipController.cs
+--- a/KSP/UI/PinnableTooltipController.cs
++++ b/KSP/UI/PinnableTooltipController.cs
+@@ -58,16 +58,6 @@ namespace KSP.UI
+ 			}
+ 		}
+ 
+-		[SpecialName]
+-		string ITooltipController.get_name()
+-		{
+-			return base.name;
+-		}
+ 
+-		[SpecialName]
+-		void ITooltipController.set_name(string value)
+-		{
+-			base.name = value;
+-		}
+ 	}
+ }
+diff --git a/KSP/UI/Screens/AppUIInputPanel.cs b/KSP/UI/Screens/AppUIInputPanel.cs
+--- a/KSP/UI/Screens/AppUIInputPanel.cs
++++ b/KSP/UI/Screens/AppUIInputPanel.cs
+@@ -32,7 +32,7 @@ namespace KSP.UI.Screens
+ 			MemberInfo[] members = this.data.GetType().GetMembers(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+ 			foreach (MemberInfo memberInfo in members)
+ 			{
+-				AppUI_Control customAttribute = memberInfo.GetCustomAttribute<AppUI_Control>();
++				AppUI_Control customAttribute = System.Attribute.GetCustomAttribute(memberInfo, typeof(AppUI_Control)) as AppUI_Control;
+ 				if (customAttribute != null && AppUIMaster.TryGetAppUIControlPrefab(customAttribute, out var prefab))
+ 				{
+ 					AppUIMember component = Object.Instantiate(prefab).GetComponent<AppUIMember>();
+diff --git a/KSP/UI/Screens/AppUIMember.cs b/KSP/UI/Screens/AppUIMember.cs
+--- a/KSP/UI/Screens/AppUIMember.cs
++++ b/KSP/UI/Screens/AppUIMember.cs
+@@ -267,9 +267,9 @@ namespace KSP.UI.Screens
+ 				this._host.CallOnDataChanged();
+ 				return true;
+ 			}
+-			if (this._property != null && !object.Equals(this._property.GetValue(this._host), newValue))
++			if (this._property != null && !object.Equals(this._property.GetValue(this._host, null), newValue))
+ 			{
+-				this._property.SetValue(this._host, newValue);
++				this._property.SetValue(this._host, newValue, null);
+ 				this._host.CallOnDataChanged();
+ 				return true;
+ 			}
+@@ -293,7 +293,7 @@ namespace KSP.UI.Screens
+ 			}
+ 			if (this._property != null)
+ 			{
+-				return this._property.GetValue(this._host);
++				return this._property.GetValue(this._host, null);
+ 			}
+ 			return null;
+ 		}
+diff --git a/KSP/UI/TooltipController.cs b/KSP/UI/TooltipController.cs
+--- a/KSP/UI/TooltipController.cs
++++ b/KSP/UI/TooltipController.cs
+@@ -112,16 +112,6 @@ namespace KSP.UI
+ 			return true;
+ 		}
+ 
+-		[SpecialName]
+-		string ITooltipController.get_name()
+-		{
+-			return base.name;
+-		}
+ 
+-		[SpecialName]
+-		void ITooltipController.set_name(string value)
+-		{
+-			base.name = value;
+-		}
+ 	}
+ }
+diff --git a/KSP/UI/UIRadioButton.cs b/KSP/UI/UIRadioButton.cs
+--- a/KSP/UI/UIRadioButton.cs
++++ b/KSP/UI/UIRadioButton.cs
+@@ -292,16 +292,6 @@ namespace KSP.UI
+ 			}
+ 		}
+ 
+-		[SpecialName]
+-		string IRadioButton.get_name()
+-		{
+-			return base.name;
+-		}
+ 
+-		[SpecialName]
+-		void IRadioButton.set_name(string value)
+-		{
+-			base.name = value;
+-		}
+ 	}
+ }
+diff --git a/KSP/UI/UIRadioButtonColorChanger.cs b/KSP/UI/UIRadioButtonColorChanger.cs
+--- a/KSP/UI/UIRadioButtonColorChanger.cs
++++ b/KSP/UI/UIRadioButtonColorChanger.cs
+@@ -158,16 +158,6 @@ namespace KSP.UI
+ 			}
+ 		}
+ 
+-		[SpecialName]
+-		string IRadioButton.get_name()
+-		{
+-			return base.name;
+-		}
+ 
+-		[SpecialName]
+-		void IRadioButton.set_name(string value)
+-		{
+-			base.name = value;
+-		}
+ 	}
+ }
+diff --git a/KerbalSeat.cs b/KerbalSeat.cs
+--- a/KerbalSeat.cs
++++ b/KerbalSeat.cs
+@@ -311,9 +311,4 @@ public class KerbalSeat : PartModule, ICommNetControlSource, IConstruction
+ 		return this.occupant == null;
+ 	}
+ 
+-	[SpecialName]
+-	string ICommNetControlSource.get_name()
+-	{
+-		return base.name;
+-	}
+ }
+diff --git a/ModuleCommand.cs b/ModuleCommand.cs
+--- a/ModuleCommand.cs
++++ b/ModuleCommand.cs
+@@ -706,9 +706,4 @@ public class ModuleCommand : PartModule, ICommNetControlSource, IResourceConsume
+ 		ModuleCommand.cacheAutoLOC_6003031 = Localizer.Format("#autoLoc_6003031");
+ 	}
+ 
+-	[SpecialName]
+-	string ICommNetControlSource.get_name()
+-	{
+-		return base.name;
+-	}
+ }
+diff --git a/ModuleGroundExpControl.cs b/ModuleGroundExpControl.cs
+--- a/ModuleGroundExpControl.cs
++++ b/ModuleGroundExpControl.cs
+@@ -402,9 +402,4 @@ public class ModuleGroundExpControl : ModuleGroundCommsPart, ICommNetControlSour
+ 		ModuleGroundExpControl.cacheAutoLOC_8002233 = Localizer.Format("#autoLOC_8002233");
+ 	}
+ 
+-	[SpecialName]
+-	string ICommNetControlSource.get_name()
+-	{
+-		return base.name;
+-	}
+ }
+diff --git a/PlanetariumCamera.cs b/PlanetariumCamera.cs
+--- a/PlanetariumCamera.cs
++++ b/PlanetariumCamera.cs
+@@ -583,9 +583,4 @@ public class PlanetariumCamera : MonoBehaviour, IKSPCamera
+ 		return this.nearestBody;
+ 	}
+ 
+-	[SpecialName]
+-	bool IKSPCamera.get_enabled()
+-	{
+-		return base.enabled;
+-	}
+ }
+diff --git a/PreFlightTests/DesignConcernBase.cs b/PreFlightTests/DesignConcernBase.cs
+--- a/PreFlightTests/DesignConcernBase.cs
++++ b/PreFlightTests/DesignConcernBase.cs
+@@ -8,19 +8,7 @@ namespace PreFlightTests
+ 
+ 		private bool firstTest = true;
+ 
+-		public event Callback<bool> TestResultChanged;
+-
+-		private event Callback<bool> _0003
+-		{
+-			add
+-			{
+-				this.TestResultChanged += value;
+-			}
+-			remove
+-			{
+-				this.TestResultChanged -= value;
+-			}
+-		}
++		public event Callback<bool> testResultChanged;
+ 
+ 		public abstract bool TestCondition();
+ 
+@@ -50,26 +38,26 @@ namespace PreFlightTests
+ 			bool flag = this.TestCondition();
+ 			if (this.firstTest)
+ 			{
+-				if (this.TestResultChanged != null)
++				if (this.testResultChanged != null)
+ 				{
+-					this.TestResultChanged(flag);
++					this.testResultChanged(flag);
+ 				}
+ 				this.firstTest = false;
+ 				this.lastPassed = flag;
+ 			}
+ 			else if (flag)
+ 			{
+-				if (!this.lastPassed && this.TestResultChanged != null)
++				if (!this.lastPassed && this.testResultChanged != null)
+ 				{
+-					this.TestResultChanged(arg1: true);
++					this.testResultChanged(arg1: true);
+ 				}
+ 				this.lastPassed = true;
+ 			}
+ 			else
+ 			{
+-				if (this.lastPassed && this.TestResultChanged != null)
++				if (this.lastPassed && this.testResultChanged != null)
+ 				{
+-					this.TestResultChanged(arg1: false);
++					this.testResultChanged(arg1: false);
+ 				}
+ 				this.lastPassed = false;
+ 			}
+diff --git a/RnDDebugUtil.cs b/RnDDebugUtil.cs
+--- a/RnDDebugUtil.cs
++++ b/RnDDebugUtil.cs
+@@ -179,12 +179,6 @@ public class RnDDebugUtil
+ 		Page page = (Page)GUILayout.Toolbar((int)this.page, this.pages);
+ 		if (page != this.page)
+ 		{
+-			switch (this.page)
+-			{
+-			}
+-			switch (page)
+-			{
+-			}
+ 			this.page = page;
+ 			this.scrollPos = Vector2.zero;
+ 			GUIUtil.ClearEditableFieldFlags();
+diff --git a/SPHCamera.cs b/SPHCamera.cs
+--- a/SPHCamera.cs
++++ b/SPHCamera.cs
+@@ -313,9 +313,4 @@ public class SPHCamera : MonoBehaviour, IKSPCamera
+ 		return InputLockManager.IsUnlocked(ControlTypes.CAMERACONTROLS);
+ 	}
+ 
+-	[SpecialName]
+-	bool IKSPCamera.get_enabled()
+-	{
+-		return base.enabled;
+-	}
+ }
+diff --git a/SiteNode.cs b/SiteNode.cs
+--- a/SiteNode.cs
++++ b/SiteNode.cs
+@@ -112,9 +112,6 @@ public class SiteNode : MonoBehaviour
+ 
+ 	protected void OnSceneLoaded(GameScenes scn)
+ 	{
+-		switch (scn)
+-		{
+-		}
+ 		this.showNode = false;
+ 	}
+ 
+diff --git a/SpaceCenterBuilding.cs b/SpaceCenterBuilding.cs
+--- a/SpaceCenterBuilding.cs
++++ b/SpaceCenterBuilding.cs
+@@ -909,15 +909,5 @@ public class SpaceCenterBuilding : MonoBehaviour, ITooltipController
+ 		}
+ 	}
+ 
+-	[SpecialName]
+-	string ITooltipController.get_name()
+-	{
+-		return base.name;
+-	}
+ 
+-	[SpecialName]
+-	void ITooltipController.set_name(string value)
+-	{
+-		base.name = value;
+-	}
+ }
+diff --git a/SpaceCenterCamera2.cs b/SpaceCenterCamera2.cs
+--- a/SpaceCenterCamera2.cs
++++ b/SpaceCenterCamera2.cs
+@@ -438,9 +438,4 @@ public class SpaceCenterCamera2 : MonoBehaviour, IKSPCamera
+ 		return false;
+ 	}
+ 
+-	[SpecialName]
+-	bool IKSPCamera.get_enabled()
+-	{
+-		return base.enabled;
+-	}
+ }
+diff --git a/TMPro/TMP_InputField.cs b/TMPro/TMP_InputField.cs
+--- a/TMPro/TMP_InputField.cs
++++ b/TMPro/TMP_InputField.cs
+@@ -3184,10 +3184,5 @@ namespace TMPro
+ 			this.textComponent.font = fontAsset;
+ 		}
+ 
+-		[SpecialName]
+-		Transform ICanvasElement.get_transform()
+-		{
+-			return base.transform;
+-		}
+ 	}
+ }
+diff --git a/TMPro/TMP_Text.cs b/TMPro/TMP_Text.cs
+--- a/TMPro/TMP_Text.cs
++++ b/TMPro/TMP_Text.cs
+@@ -1955,9 +1955,9 @@ namespace TMPro
+ 				{
+ 					if (text[i + 2] == ':')
+ 					{
+-						precision = text[i + 3] - 48;
++						precision = (char)(text[i + 3] - 48);
+ 					}
+-					switch (text[i + 1])
++					switch ((int)text[i + 1])
+ 					{
+ 					case 48:
+ 						this.AddFloatToCharArray(arg0, ref index, precision);
+@@ -2014,7 +2014,7 @@ namespace TMPro
+ 			{
+ 				if (sourceText[i] == '\\' && i < sourceText.Length - 1)
+ 				{
+-					switch (sourceText[i + 1])
++					switch ((int)sourceText[i + 1])
+ 					{
+ 					case 116:
+ 						if (writeIndex == this.m_char_buffer.Length)
+@@ -2111,7 +2111,7 @@ namespace TMPro
+ 			{
+ 				if (sourceText[i] == '\\' && i < length - 1)
+ 				{
+-					switch (sourceText[i + 1])
++					switch ((int)sourceText[i + 1])
+ 					{
+ 					case 116:
+ 						if (writeIndex == this.m_char_buffer.Length)
+@@ -2377,7 +2377,7 @@ namespace TMPro
+ 			{
+ 				if (this.m_inputSource == TextInputSources.Text && sourceText[i] == '\\' && sourceText.Length > i + 1)
+ 				{
+-					switch (sourceText[i + 1])
++					switch ((int)sourceText[i + 1])
+ 					{
+ 					case 92:
+ 						if (this.m_parseCtrlCharacters && sourceText.Length > i + 2)
+@@ -2531,7 +2531,7 @@ namespace TMPro
+ 			{
+ 				if (this.m_parseCtrlCharacters && sourceText[i] == '\\' && sourceText.Length > i + 1)
+ 				{
+-					switch (sourceText[i + 1])
++					switch ((int)sourceText[i + 1])
+ 					{
+ 					case 92:
+ 						if (sourceText.Length > i + 2)
+diff --git a/UnityEngine/UI/BoxSlider.cs b/UnityEngine/UI/BoxSlider.cs
+--- a/UnityEngine/UI/BoxSlider.cs
++++ b/UnityEngine/UI/BoxSlider.cs
+@@ -407,10 +407,5 @@ namespace UnityEngine.UI
+ 			eventData.useDragThreshold = false;
+ 		}
+ 
+-		[SpecialName]
+-		Transform ICanvasElement.get_transform()
+-		{
+-			return base.transform;
+-		}
+ 	}
+ }
+diff --git a/VABCamera.cs b/VABCamera.cs
+--- a/VABCamera.cs
++++ b/VABCamera.cs
+@@ -286,9 +286,4 @@ public class VABCamera : MonoBehaviour, IKSPCamera
+ 		return InputLockManager.IsUnlocked(ControlTypes.CAMERACONTROLS);
+ 	}
+ 
+-	[SpecialName]
+-	bool IKSPCamera.get_enabled()
+-	{
+-		return base.enabled;
+-	}
+ }
+--

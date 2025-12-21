@@ -1,0 +1,8 @@
+# Ignore Kerbal Space Program archives
+Kerbal Space Program.7z
+Kerbal Space Program.zip
+
+# Ignore generated directories
+KSP_app/
+workspace/
+dotnet_src/
