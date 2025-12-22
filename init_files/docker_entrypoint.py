@@ -24,6 +24,15 @@ def run_command(command, cwd=None, ignore_errors=False):
         if not ignore_errors:
             sys.exit(1)
 
+def init_git_repo(path, message):
+    print(f"Initializing Git repository in {path}...")
+    run_command("git init", cwd=path)
+    run_command(f"git checkout -b {BRANCH_NAME}", cwd=path)
+    run_command("git config --global user.email 'you@example.com'", cwd=path)
+    run_command("git config --global user.name 'KSP Stock'", cwd=path)
+    run_command("git add .", cwd=path)
+    run_command("git commit -m '" + message + "'", cwd=path)
+
 def decompile_dll(dll_name):
     dll_path = os.path.join(MANAGED_PATH, dll_name)
     if not os.path.exists(dll_path):
@@ -77,6 +86,7 @@ def update_csproj(csproj_path, proj_name):
     content = content.replace("<TargetFrameworkVersion>v4.0<", "<TargetFrameworkVersion>v4.8.1<")
     content = content.replace("<WarningLevel>4<", "<WarningLevel>1<")
     content = content.replace("<HintPath>KSP_app/", "<HintPath>../../KSP_app/")
+    content = content.replace("<DebugType>pdbonly<", "<DebugType>full<")
     
     if proj_name == "Assembly-CSharp":
         import re
@@ -139,13 +149,8 @@ def main():
             valid_checksums = json.load(f)
         root_key = list(valid_checksums.keys())[0]
         verify_checksums(REPO_PATH, valid_checksums[root_key], CHECKSUM_FILE)
-        print(f"Creating git repo (this will take a couple seconds)...")        
-        run_command("git init", cwd=REPO_PATH)
-        run_command(f"git checkout -b {BRANCH_NAME}", cwd=REPO_PATH)
-        run_command("git config --global user.email 'you@example.com'", cwd=REPO_PATH)
-        run_command("git config --global user.name 'KSP Stock'", cwd=REPO_PATH)
-        run_command("git add .", cwd=REPO_PATH)
-        run_command("git commit -m 'Initial commit of stock files'", cwd=REPO_PATH)
+        print(f"Creating git repo (this will take a couple seconds)...")   
+        init_git_repo(REPO_PATH, 'Initial commit of stock files')
 
     # Decompilation
     print("Starting decompilation process...")
@@ -160,6 +165,8 @@ def main():
     
     apply_patch()
     create_sln()
+    init_git_repo(os.path.join(DOTNET_SRC_PATH, "Assembly-CSharp"), 'Initial commit of decompiled files')
+    init_git_repo(os.path.join(DOTNET_SRC_PATH, "Assembly-CSharp-firstpass"), 'Initial commit of decompiled files')
     print("Decompilation complete.")
 
 if __name__ == "__main__":
